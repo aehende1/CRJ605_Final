@@ -1,0 +1,301 @@
+---
+title: "Final Project Syntax"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(sna)
+
+library(network)
+library(RColorBrewer)
+```
+
+
+```{r}
+
+#Load the datasets from the local files
+
+ Hartford.drugnet <- read.csv(file="C:/Users/aehende1/Desktop/CRJ_605/Final_Project/Hartford/DRUGNET.csv", header=TRUE, row.names=1, sep=",")
+
+Hartford.drugattributes <- read.csv(file="C:/Users/aehende1/Desktop/CRJ_605/Final_Project/Hartford/DRUGATTR.csv", header=TRUE, sep=",")
+
+head(Hartford.drugattributes)
+
+Project90.edges <- read.csv(file="C:/Users/aehende1/Desktop/CRJ_605/Final_Project/Project90/nodes.csv", header=TRUE, sep=",")
+
+Project90.nodes <- read.csv(file="C:/Users/aehende1/Desktop/CRJ_605/Final_Project/Project90/nodes90.csv", header=TRUE, sep=",")
+
+head(Project90.edges)
+```
+```{r}
+#Convert to network objects
+
+Hartford.net <- network(Hartford.drugnet, matrix.type = "adjacency", directed=TRUE)
+summary(Hartford.net, print.adj=FALSE)
+
+Project90.net <- as.network(Project90.edges, matrix.type="edgelist", directed=FALSE)
+summary(Project90.net, print.adj=FALSE)
+
+#Add descriptive variables
+
+set.vertex.attribute(Hartford.net, "Ethnicity", Hartford.drugattributes$Ethnicity)
+set.vertex.attribute(Hartford.net, "Gender", Hartford.drugattributes$Gender)
+
+P.race <- Project90.nodes$race
+P.gender <- Project90.nodes$gender
+P.sexworker <- Project90.nodes$sex.worker
+P.pimp <- Project90.nodes$pimp
+P.sex.work.client <- Project90.nodes$sex.work.client
+P.drugdealer <- Project90.nodes$drug.dealer
+P.drugcook <- Project90.nodes$drug.cook
+P.thief <- Project90.nodes$thief
+P.retired <- Project90.nodes$retired
+P.housewife <- Project90.nodes$housewife
+P.disabled <- Project90.nodes$disabled
+P.unemployed <- Project90.nodes$unemployed
+P.homeless <- Project90.nodes$homeless
+
+set.vertex.attribute(Project90.net, "Race", P.race)
+set.vertex.attribute(Project90.net, "Gender", P.gender)
+set.vertex.attribute(Project90.net, "Sex Worker", P.sexworker)
+set.vertex.attribute(Project90.net, "Pimp", P.pimp)
+set.vertex.attribute(Project90.net, "Sex Worker Client", P.sex.work.client)
+set.vertex.attribute(Project90.net, "Drug Dealer", P.drugdealer)
+set.vertex.attribute(Project90.net, "Drug Cook", P.drugcook)
+set.vertex.attribute(Project90.net, "Theif", P.thief)
+set.vertex.attribute(Project90.net, "Retired", P.retired)
+set.vertex.attribute(Project90.net, "Housewife", P.housewife)
+set.vertex.attribute(Project90.net, "Disabled", P.disabled)
+set.vertex.attribute(Project90.net, "Unemployed", P.unemployed)
+set.vertex.attribute(Project90.net, "Homeless", P.homeless)
+
+summary(Project90.net, print.adj=FALSE)
+
+```
+
+
+```{r}
+#Run Descriptive graph-level analysis
+##Degree
+H.ideg <- degree(Hartford.net, gmode="digraph", cmode="indegree")
+H.odeg <- degree(Hartford.net, gmode="digraph", cmode="outdegree")
+H.deg <- degree(Hartford.net, gmode="digraph")
+summary(H.ideg)
+summary(H.odeg)
+summary(H.deg)
+
+P.deg <- degree(Project90.net, gmode="graph", cmode="degree")
+summary(P.deg)
+
+Hartford.g <- dim(as.matrix(Hartford.net))[1]
+
+Project90.g <- dim(as.matrix(Project90.net))[1]
+
+s.Hartford.ideg <- H.ideg / (Hartford.g-1)
+s.Hartford.odeg <- H.odeg / (Hartford.g-1)
+
+s.P.deg <- P.deg / (Project90.g -1)
+
+
+mean.H.ideg <- mean(H.ideg)
+
+mean.H.odeg <- mean(H.odeg)
+
+mean.H.deg <- mean(H.deg)
+
+mean.s.H.ideg <- mean(s.Hartford.ideg)
+mean.s.H.odeg <- mean(s.Hartford.odeg)
+
+mean.s.P.deg <- mean(s.P.deg)
+
+mean.P.deg <- mean(P.deg)
+
+mean.H.ideg
+mean.H.odeg
+mean.H.deg
+mean.s.H.ideg
+mean.s.H.odeg
+mean.s.P.deg
+mean.P.deg
+
+##Betweenness
+
+H.bet <- betweenness(Hartford.net, gmode="digraph")
+
+H.bet.cent <- centralization(Hartford.net, betweenness, mode="digraph")
+
+Project90.bet <- read.csv(file="C:/Users/aehende1/Desktop/CRJ_605/Final_Project/Project90/Project90.bet.csv", header=TRUE, row.names=1, sep=",")
+
+P.bet.cent <-  0.08431052
+
+s.Hartford.bet <- H.bet / (((Hartford.g-1)*(Hartford.g-2))/2) 
+
+s.P.bet <- Project90.bet / ((Project90.g-1)*(Project90.g-2)/2)
+
+mean.H.bet <- mean(H.bet)
+
+mean.P.bet <- mean(Project90.bet)
+
+
+
+##Closeness
+
+
+H.close <- closeness(Hartford.net, gmode="digraph")
+
+H.close.cent <- centralization(Hartford.net, closeness, mode="digraph")
+
+summary(H.close)
+
+summary(H.close.cent)
+
+P.close <- closeness(Project90.net, gmode="graph")
+
+P.close.cent <- centralization(Project90.net, closeness, mode="graph")
+
+summary(P.close)
+
+summary(P.close.cent)
+
+
+##Centralization
+
+H.icent <- centralization(Hartford.net, degree, mode="digraph", cmode="indegree")
+
+H.ocent <- centralization(Hartford.net, degree, mode="digraph", cmode="outdegree")
+
+summary(H.icent)
+summary(H.ocent)
+
+P.cent <- centralization(Project90.net, degree, mode="graph")
+
+summary(P.cent)
+
+##Correlation
+
+cent.Hartford <- data.frame(
+    deg.cent = degree(Hartford.net,gmode="digraph"),
+    close.cent = closeness(Hartford.net,gmode="digraph"),
+    between.cent = betweenness(Hartford.net,gmode="digraph")
+)
+
+cent.Project90 <- data.frame(
+  deg.cent = degree(Project90.net, gmode="graph"),
+  close.cent = closeness(Project90.net, gmode="graph"),
+  between.cent= Project90.bet)
+
+cor(cent.Hartford)
+
+cor(cent.Project90)
+
+##Kcores
+
+Hartford.kcore <- kcores(Hartford.net, mode="digraph")
+
+Project90.kcore <- kcores(Project90.net, mode="graph")
+
+##Isolates
+
+length(which(has.edges(Hartford.net) ==FALSE))
+
+length(which(has.edges(Project90.net) ==FALSE))
+
+```
+
+
+```{r}
+#Visualize the networks
+
+H.cols <- brewer.pal(11, "Spectral")
+P.cols <- brewer.pal(11, "PRGn")
+
+set.seed(33)
+
+gplot(Hartford.net, usearrows = TRUE, edge.col="grey40", vertex.col=H.cols[1], arrowhead.cex=0.3)
+title("Hartford Drugnet" )
+
+set.seed(33)
+gplot(Project90.net, usearrows=FALSE, edge.col="grey40", vertex.col=P.cols[10], vertex.cex=2)
+title("Project 90 Network")
+```
+
+```{r}
+
+#Visualize the degree differences
+op <- par(mfrow=c(2,1), mai=c(0.8,0.8,0.2,0.2))
+hist(H.deg,   breaks=20, main="", xlab="Degree (Hartford)"  , xlim=range(0:20), ylim=range(0:150), col=H.cols[1])
+hist(P.deg, breaks=20, main="", xlab="Degree (Project 90)", xlim=range(0:320), ylim=range(0:4500), col=P.cols[10])
+
+#Zoom in
+op <- par(mfrow=c(2,1), mai=c(0.8,0.8,0.2,0.2))
+hist(H.deg,   breaks=20, main="", xlab="Degree (Hartford)"  , xlim=range(0:20), ylim=range(0:50), col=H.cols[1])
+hist(P.deg, breaks=20, main="", xlab="Degree (Project 90)", xlim=range(0:320), ylim=range(0:50), col=P.cols[10])
+
+#Visualize the standardized differences
+
+op<- par(mfrow=c(2,1), mai=c(0.8,0.8,0.2,0.2))
+
+hist(s.Hartford.ideg,   breaks=50, main="", xlab="Standardized Degree (Hartford)"  , xlim=range(0.01:0.09), ylim=range(0:75), col=H.cols[1])
+hist(s.P.deg,   breaks=50, main="", xlab="Standardized Degree (Project 90)"  , xlim=range(0.01:0.09), ylim=range(0:300), col=P.cols[10])
+
+
+```
+
+
+
+```{r}
+# Create the colors for Gender in Hartford.
+H.sex.cols <- Hartford.net%v%"Gender"
+H.sex.cols[H.sex.cols == "1"] <- "blue"
+H.sex.cols[H.sex.cols == "2"] <- "pink"
+H.sex.cols[H.sex.cols == "0"] <- "white"
+
+# Create shapes for Ethnicity in Hartford.
+H.race.shp <- Hartford.net%v%"Ethnicity"
+H.race.shp[H.race.shp == "1"] <- 4
+H.race.shp[H.race.shp == "2"] <- 5
+H.race.shp[H.race.shp == "3"] <- 3
+H.race.shp[H.race.shp == "5"] <- 12
+H.race.shp[H.race.shp == "6"] <- 12
+H.race.shp[H.race.shp == "7"] <- 12
+H.race.shp[is.na(H.race.shp) ==TRUE] <- 50
+H.race.shp <- as.numeric(H.race.shp)
+
+# Plot the data.
+set.seed(33)
+gplot(Hartford.net, usearrows = TRUE, arrowhead.cex=0.3, edge.col = "grey80", vertex.col=H.sex.cols, vertex.sides=H.race.shp)
+title("Hartford Drugnet",
+      sub="Nodes Colored by Gender (Blue = M, Pink = F, White = Missing)\n 
+        Nodes Shaped by Ethnicity (Square = White, Triangle = Latino, \n
+      Pentagon = Black or African American, Circle = Other or missing)"
+  )
+
+
+P.sex.cols <- Project90.net%v%"Gender"
+P.sex.cols[P.sex.cols == "0"] <- "blue"
+P.sex.cols[P.sex.cols == "1"] <- "pink"
+P.sex.cols[is.na(P.sex.cols) ==TRUE] <- "white"
+
+# Create shapes for Ethnicity in Project 90.
+P.race.shp <- Project90.net%v%"Race"
+P.race.shp[P.race.shp == "4"] <- 4
+P.race.shp[P.race.shp == "2"] <- 5
+P.race.shp[P.race.shp == "1"] <- 3
+P.race.shp[P.race.shp == "3"] <- 12
+P.race.shp[P.race.shp == "5"] <- 12
+P.race.shp[is.na(P.race.shp) ==TRUE] <- 50
+P.race.shp <- as.numeric(P.race.shp)
+
+# Plot the data.
+set.seed(33)
+gplot(Project90.net, usearrows = FALSE, edge.col = "grey80", vertex.col=P.sex.cols, vertex.sides=P.race.shp, vertex.cex=2.5)
+title("Project 90 Network",
+      sub="Nodes Colored by Gender (Blue = M, Pink = F, White = Missing)\n 
+        Nodes Shaped by Ethnicity (Square = White, Triangle = Native American, \n
+      Pentagon = Black or African American, Circle = Other or missing)"
+  )
+
+```
